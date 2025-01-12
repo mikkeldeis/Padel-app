@@ -1,0 +1,183 @@
+# Paddle App Architecture Diagram
+
+### Overview:
+The architecture is divided into three main layers:
+1. **Frontend (Client Side)**
+2. **Backend (Server Side)**
+3. **Database**
+
+---
+
+### 1. Frontend (Client Side):
+- **Components**:
+  - Login/Signup Page
+  - Match Creation Page
+  - Tournament Creation Page
+  - Profile Page (Stats and History)
+  - Match and Tournament QR Code Scanning
+  - Game History View
+
+- **Technologies**:
+  - HTML, CSS, JavaScript (or frameworks like React/Vue.js)
+  - Responsive Design for mobile and desktop compatibility.
+
+---
+
+### 2. Backend (Server Side):
+- **Components**:
+  - Authentication Service (Login/Signup, Guest Access)
+  - Match Management (Create, Update, Fetch Matches)
+  - Tournament Management (Create, Update, Fetch Tournaments)
+  - Stats and Insights Calculation (Recent Matches, Win Rates, Frequent Collaborators/Adversaries)
+
+- **Technologies**:
+  - **Language**: Go or Python
+  - **Frameworks**:
+    - Go: Gin/Gorilla Mux
+    - Python: Django/Flask
+
+- **Endpoints**:
+  - `/login`: Handles user authentication.
+  - `/register`: Registers a new user.
+  - `/create-match`: Creates a single match.
+  - `/create-tournament`: Hosts a tournament.
+  - `/join-tournament`: Scans a QR code to join a tournament.
+  - `/save-score`: Saves match results.
+  - `/get-profile`: Fetches user stats and history.
+
+---
+
+### 3. Database:
+- **Schema Design**:
+  - `users` Table:
+    - `id`: Unique user identifier.
+    - `username`: User’s display name.
+    - `email`: (optional) for registered users.
+    - `password`: Encrypted password for registered users.
+    - `guest`: Boolean flag to distinguish guests.
+
+  - `matches` Table:
+    - `id`: Unique match identifier.
+    - `player1_id`, `player2_id`: Participants.
+    - `score1`, `score2`: Scores for each player/team.
+    - `date`: Match date.
+
+  - `tournaments` Table:
+    - `id`: Unique tournament identifier.
+    - `name`: Tournament name.
+    - `organizer_id`: User ID of the organizer.
+    - `participant_ids`: List of player IDs.
+    - `match_ids`: Matches in the tournament.
+
+  - `friends` Table:
+    - `user_id`: ID of the user.
+    - `friend_id`: ID of the friend.
+
+- **Database Options**:
+  - SQL-based: MySQL, PostgreSQL.
+  - Use an ORM (e.g., SQLAlchemy for Python or GORM for Go) for easier querying.
+
+---
+
+### Diagram:
+
+```plaintext
+|------------------------|                      |------------------------|
+|      Frontend          |<--HTTP Requests-->  |       Backend          |
+|------------------------|                      |------------------------|
+        |                                          |           |
+        |--Login/Signup--------------------------->|           |
+        |--Create Match--------------------------->|           |
+        |--Create Tournament---------------------->|           |
+        |--Scan QR Code--------------------------->|           |
+        |--View Stats and History----------------->|           |
+        |                                          |           |
+        |------------------------|                |           |
+        | Database Interaction  |<----------------|           |
+        |------------------------|                |           |
+
+|------------------------|
+|       Database         |
+|------------------------|
+   | Users Table         |
+   | Matches Table       |
+   | Tournaments Table   |
+   | Friends Table       |
+|------------------------|
+```
+
+---
+
+### Suggested File Structure:
+
+```plaintext
+paddle_app/
+├── frontend/             # Frontend source files
+│   ├── public/           # Static files (HTML, CSS, JS)
+│   │   ├── index.html    # Main entry point
+│   │   ├── styles.css    # Global styles
+│   │   ├── app.js        # Main frontend logic
+│   ├── src/              # Component-based architecture (React/Vue.js)
+│       ├── components/   # UI components
+│       │   ├── Login.js  # Login component
+│       │   ├── Profile.js # Profile page component
+│       │   ├── Match.js  # Match creation component
+│       │   └── QRCode.js # QR code scanning logic
+│       └── utils/        # Shared utilities (e.g., API calls)
+│           ├── api.js    # API request helpers
+│           └── helpers.js # Shared functions
+│
+├── backend/              # Backend source files
+│   ├── app/              # Core application logic
+│   │   ├── controllers/  # Handles API requests
+│   │   │   ├── auth.py   # Authentication endpoints
+│   │   │   ├── match.py  # Match-related endpoints
+│   │   │   ├── stats.py  # Profile and stats endpoints
+│   │   │   └── tournament.py # Tournament endpoints
+│   │   ├── models/       # Database models
+│   │   │   ├── user.py   # User model
+│   │   │   ├── match.py  # Match model
+│   │   │   └── tournament.py # Tournament model
+│   │   ├── services/     # Business logic
+│   │   │   ├── auth_service.py  # Authentication logic
+│   │   │   ├── match_service.py # Match logic
+│   │   │   └── stats_service.py # Stats logic
+│   │   ├── utils/        # Utilities (e.g., validation, QR code generation)
+│   │   └── app.py        # Main app file (e.g., Flask/Django/Gin setup)
+│
+├── database/             # Database schema and migrations
+│   ├── migrations/       # Migration scripts
+│   ├── schema.sql        # Initial database schema
+│   └── seed.sql          # Optional seed data
+│
+├── tests/                # Test cases
+│   ├── frontend/         # Frontend tests
+│   ├── backend/          # Backend tests
+│   └── integration/      # End-to-end tests
+│
+├── .env                  # Environment variables
+├── requirements.txt      # Python dependencies (for Flask/Django backend)
+├── go.mod                # Go module dependencies (if using Go backend)
+├── package.json          # JavaScript dependencies (for frontend)
+└── README.md             # Project documentation
+```
+
+---
+
+### File Calling Relationships:
+
+1. **Frontend API Calls**:
+   - Use a shared utility module (`frontend/src/utils/api.js`) to make HTTP requests to backend endpoints (e.g., `/create-match`, `/save-score`).
+
+2. **Backend Modular Calls**:
+   - **Controllers**: Handle HTTP requests and interact with services (e.g., `match.py` calls `match_service.py` for match creation logic).
+   - **Services**: Contain business logic and interact with models (e.g., `match_service.py` queries the database using `match.py`).
+
+3. **Database Interactions**:
+   - Models (`models/`) define the database schema and query logic.
+   - Services interact with models for CRUD operations.
+
+4. **Shared Utilities**:
+   - Utilities like QR code generation or validation are placed in `utils/` and imported where needed in controllers or services.
+
+Let me know if you need more detailed guidance on any specific file or module!
