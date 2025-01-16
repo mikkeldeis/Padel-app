@@ -47,6 +47,19 @@ class TournamentSerializer(serializers.ModelSerializer):
             {"start_date": "Start date must be before the end date."}
         )
     return data
+  def update(self, instance, validated_data):
+    start_date = validated_data.get('start_date', instance.start_date)
+    end_date = validated_data.get('end_date', instance.end_date)
+    if start_date >= end_date:
+        raise serializers.ValidationError(
+            {"start_date": "Start date must be before the end date."}
+        )
+    instance.start_date = start_date
+    instance.end_date = end_date
+    instance.name = validated_data.get('name', instance.name)
+    instance.tournament_type = validated_data.get('tournament_type', instance.tournament_type)
+    instance.save()
+    return instance
 
 class RoundSerializer(serializers.ModelSerializer):
   class Meta:

@@ -13,6 +13,8 @@ class TournamentTests(TestCase):
     self.client = APIClient()
     self.host = User.objects.create_user(username='host', password='password')
     self.client.force_authenticate(user=self.host)
+
+  # test tournaments/
   def test_create_tournament_bracket(self):
       response = self.client.post(
           '/api/tournaments/',
@@ -61,4 +63,84 @@ class TournamentTests(TestCase):
       )
       self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
       self.assertEqual(Tournament.objects.count(), 0)
+
+  # test tournaments/update/<int:pk>/
+  def test_update_tournament(self):
+      tournament = Tournament.objects.create(host=self.host, start_date=date(2022, 1, 1), end_date=date(2022, 1, 2), name='Tournament 1', tournament_type='BRACKET')
+      team = Team.objects.create(player1=self.host)
+      updated_data = {
+          'start_date': '2022-02-01',
+          'end_date': '2022-02-02',
+          'name': 'Tournament new',
+          'tournament_type': 'AMERICANO',
+      }
+      response = self.client.put(f'/api/tournaments/update/{tournament.id}/', updated_data, format='json')
+      self.assertEqual(response.status_code, status.HTTP_200_OK)
+      tournament.refresh_from_db()
+      self.assertEqual(tournament.start_date, date(2022, 2, 1))
+      self.assertEqual(tournament.end_date, date(2022, 2, 2))
+      self.assertEqual(tournament.name, 'Tournament new')
+      self.assertEqual(tournament.tournament_type, 'AMERICANO')
+  def test_update_tournament_invalid_dates(self):
+      tournament = Tournament.objects.create(host=self.host, start_date=date(2022, 1, 1), end_date=date(2022, 1, 2), name='Tournament 1', tournament_type='BRACKET')
+      updated_data = {
+          'start_date': '2022-02-02',
+          'end_date': '2022-02-01',
+          'name': 'Tournament new',
+          'tournament_type': 'AMERICANO',
+      }
+      response = self.client.put(f'/api/tournaments/update/{tournament.id}/', updated_data, format='json')
+      self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+      self.assertIn('start_date', response.data)
+      self.assertEqual(response.data['start_date'][0], 'Start date must be before the end date.')
+  def test_update_tournament_unauthenticated(self):
+      self.client.force_authenticate(user=None)
+      tournament = Tournament.objects.create(host=self.host, start_date=date(2022, 1, 1), end_date=date(2022, 1, 2), name='Tournament 1', tournament_type='BRACKET')
+      updated_data = {
+          'start_date': '2022-02-01',
+          'end_date': '2022-02-02',
+          'name': 'Tournament new',
+          'tournament_type': 'AMERICANO',
+      }
+      response = self.client.put(f'/api/tournaments/update/{tournament.id}/', updated_data, format='json')
+      self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+      tournament.refresh_from_db()
+  # test tournaments/delete/<int:pk>/
+  def test_delete_tournament(self):
+      tournament = Tournament.objects.create(host=self.host, start_date=date(2022, 1, 1), end_date=date(2022, 1, 2), name='Tournament 1', tournament_type='BRACKET')
+      response = self.client.delete(f'/api/tournaments/delete/{tournament.id}/')
+      self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+      self.assertEqual(Tournament.objects.count(), 0)
+  def test_delete_tournament_unauthenticated(self):
+      self.client.force_authenticate(user=None)
+      tournament = Tournament.objects.create(host=self.host, start_date=date(2022, 1, 1), end_date=date(2022, 1, 2), name='Tournament 1', tournament_type='BRACKET')
+      response = self.client.delete(f'/api/tournaments/delete/{tournament.id}/')
+      self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+      self.assertEqual(Tournament.objects.count(), 1)
+  
+  #test tournaments/<int:pk>/
+  def test_get_tournament(self):
+      tournament = Tournament.objects.create(host=self.host, start_date=date(2022, 1, 1), end_date=date(2022, 1, 2), name='Tournament 1', tournament_type='BRACKET')
+      response = self.client.get(f'/api/tournaments/{tournament.id}/')
+      self.assertEqual(response.status_code, status.HTTP_200_OK)
+      self.assertEqual(response.data, {'id': tournament.id, 'host': self.host.id, 'start_date': '2022-01-01', 'end_date': '2022-01-02', 'name': 'Tournament 1', 'winner': None, 'tournament_type': 'BRACKET'})
+  def test_get_tournaments(self):
+      tournament1 = Tournament.objects.create(host=self.host, start_date=date(2022, 1, 1), end_date=date(2022, 1, 2), name='Tournament 1', tournament_type='BRACKET')
+      tournament2 = Tournament.objects.create(host=self.host, start_date=date(2022, 1, 3), end_date=date(2022, 1, 4), name='Tournament 2', tournament_type='AMERICANO')
+      response = self.client.get('/api/tournaments/')
+      self.assertEqual(response.status_code, status.HTTP_200_OK)
+      self.assertEqual(response.data, [
+          {'id': tournament1.id, 'host': self.host.id, 'start_date': '2022-01-01', 'end_date': '2022-01-02', 'name': 'Tournament 1', 'winner': None, 'tournament_type': 'BRACKET'},
+          {'id': tournament2.id, 'host': self.host.id, 'start_date': '2022-01-03', 'end_date': '2022-01-04', 'name': 'Tournament 2', 'winner': None, 'tournament_type': 'AMERICANO'}
+      ])
+  def test_get_tournament_unauthenticated(self):
+      self.client.force_authenticate(user=None)
+      tournament = Tournament.objects.create(host=self.host, start_date=date(2022, 1, 1), end_date=date(2022, 1, 2), name='Tournament 1', tournament_type='BRACKET')
+      response = self.client.get(f'/api/tournaments/{tournament.id}/')
+      self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+      
+
+
+      
   

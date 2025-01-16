@@ -25,7 +25,7 @@ class Tournament(models.Model):
   start_date = models.DateField(null=True, blank=True)
   end_date = models.DateField(null=True, blank=True)
   name = models.CharField(max_length=100)
-  winner = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='tournament_winner', null=True, blank=True)
+  winner = models.ForeignKey(Team, null=True, blank=True, on_delete=models.SET_NULL)
   tournament_type = models.CharField(max_length=10, choices=TOURNAMENT_TYPES, default='BRACKET')
   def __str__(self):
     return f'{self.name} hosted by {self.host.username}'
@@ -49,7 +49,7 @@ class Match(models.Model):
     team_2 = models.ForeignKey('Team', related_name='team_2_matches', on_delete=models.CASCADE, null=True, blank=True)
     date = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
-    
+
     # Store scores as arrays of integers
     score_team_1 = ArrayField(models.IntegerField(), blank=True, null=True)  # e.g [6, 5, 6]
     score_team_2 = ArrayField(models.IntegerField(), blank=True, null=True)  # e.g [4, 7, 3]

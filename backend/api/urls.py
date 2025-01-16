@@ -4,6 +4,8 @@ from . import views
 urlpatterns = [
     path('teams/', views.TeamListCreateView.as_view(), name="team-list-create"),
     path('tournaments/', views.TournamentListCreateView.as_view(), name="tournament-list-create"),
+    path('tournaments/<int:pk>/', views.TournamentRetriveView.as_view(), name="tournament-retrieve"),
+    path('tournaments/update/<int:pk>/', views.TournamentUpdateView.as_view(), name="tournament-update"),
+    path('tournaments/delete/<int:pk>/', views.TournamentDeleteView.as_view(), name="tournament-delete"),
     path('rounds/', views.RoundListCreateView.as_view(), name="round-list-create"),
-    # path('tournaments/delete/<int:pk>/', views.TournamentDeleteView.as_view(), name="tournament-delete"),
 ]

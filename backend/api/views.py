@@ -33,7 +33,23 @@ class TournamentListCreateView(generics.ListCreateAPIView):
         return Tournament.objects.filter(host=user)
     def perform_create(self, serializer):
         serializer.save(host=self.request.user)
-
+class TournamentUpdateView(generics.UpdateAPIView):
+    queryset = Tournament.objects.all()
+    serializer_class = TournamentSerializer
+    permission_classes = [IsAuthenticated]
+    def perform_update(self,serializer):
+        serializer.save()
+        #TODO add email confirmation. 
+class TournamentRetriveView(generics.RetrieveAPIView):
+    queryset = Tournament.objects.all()
+    serializer_class = TournamentSerializer
+    permission_classes = [IsAuthenticated]
+class TournamentDeleteView(generics.DestroyAPIView):
+    serializer_class = TournamentSerializer
+    permission_classes = [IsAuthenticated]
+    def get_queryset(self):
+        user = self.request.user
+        return Tournament.objects.filter(host=user)
 class RoundListCreateView(generics.ListCreateAPIView):
     serializer_class = RoundSerializer
     permission_classes = [IsAuthenticated]
@@ -57,11 +73,4 @@ class RoundListCreateView(generics.ListCreateAPIView):
             raise ValidationError({"start_date": "Round start date cannot be before the tournament start date."})
         serializer.save(tournament=tournament)
 
-    
-# class TournamentDeleteView(generics.DestroyAPIView):
-#     serializer_class = TournamentSerializer
-#     permission_classes = [IsAuthenticated]
-#     def get_queryset(self):
-#         user = self.request.user
-#         return Tournament.objects.filter(host=user)
 
