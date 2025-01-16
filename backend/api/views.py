@@ -1,10 +1,10 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from rest_framework import generics, status
-from .serializers import UserSerializer, TeamSerializer, TournamentSerializer
+from .serializers import UserSerializer, TeamSerializer, TournamentSerializer, RoundSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Team, Match, Tournament
-from django.core.exceptions import ValidationError
+from .models import Team, Match, Tournament, Round
+from rest_framework.exceptions import ValidationError
 
 
 # Create your views here.
@@ -32,21 +32,32 @@ class TournamentListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         return Tournament.objects.filter(host=user)
     def perform_create(self, serializer):
-        # Create the tournament instance, but don't save it yet
-        tournament = serializer.save(host=self.request.user)
+        serializer.save(host=self.request.user)
 
+class RoundListCreateView(generics.ListCreateAPIView):
+    serializer_class = RoundSerializer
+    permission_classes = [IsAuthenticated]
+    def get_queryset(self):
+        user = self.request.user
+        return Round.objects.filter(tournament__host=user)
+    def perform_create(self, serializer):
+        tournament_id = self.request.data.get('tournament')
+        if not tournament_id:
+            raise ValidationError({"tournament": "This field is required."})
         try:
-            # Explicitly call the clean method to perform validation
-            tournament.full_clean()  # This will call the `clean` method
-        except ValidationError as e:
-            # Catch the validation error and return a 400 response
-            return Response(
-                {'detail': e.message_dict.get('__all__', ['Invalid data'])},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        # If no error occurs, save the tournament
-        tournament.save()
-        
+            tournament = Tournament.objects.get(id=tournament_id)
+        except Tournament.DoesNotExist:
+            raise ValidationError({"tournament": "Invalid tournament ID."})
+        from datetime import datetime
+
+        start_date_str = self.request.data['start_date']
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        # Validate that the round start date is not before the tournament start date
+        if start_date < tournament.start_date:
+            raise ValidationError({"start_date": "Round start date cannot be before the tournament start date."})
+        serializer.save(tournament=tournament)
+
+    
 # class TournamentDeleteView(generics.DestroyAPIView):
 #     serializer_class = TournamentSerializer
 #     permission_classes = [IsAuthenticated]

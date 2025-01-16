@@ -19,6 +19,7 @@ class Tournament(models.Model):
   TOURNAMENT_TYPES = [
     ('BRACKET', 'Bracket'),
     ('AMERICANO', 'Americano'),
+    ('LEAGUE', 'League')
   ]
   host = models.ForeignKey(User, on_delete=models.CASCADE)
   start_date = models.DateField(null=True, blank=True)
@@ -28,11 +29,6 @@ class Tournament(models.Model):
   tournament_type = models.CharField(max_length=10, choices=TOURNAMENT_TYPES, default='BRACKET')
   def __str__(self):
     return f'{self.name} hosted by {self.host.username}'
-  def clean(self):
-        # Custom validation: ensure start_date is before end_date
-        if self.start_date and self.end_date:
-            if self.start_date >= self.end_date:
-               raise ValidationError({'__all__': ['Start date must be before the end date.']})
   
 class Round(models.Model):
   tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE)
@@ -53,9 +49,10 @@ class Match(models.Model):
     team_2 = models.ForeignKey('Team', related_name='team_2_matches', on_delete=models.CASCADE, null=True, blank=True)
     date = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
+    
     # Store scores as arrays of integers
-    score_team_1 = ArrayField(models.IntegerField(), blank=True, null=True)  # [6, 5, 6]
-    score_team_2 = ArrayField(models.IntegerField(), blank=True, null=True)  # [4, 7, 3]
+    score_team_1 = ArrayField(models.IntegerField(), blank=True, null=True)  # e.g [6, 5, 6]
+    score_team_2 = ArrayField(models.IntegerField(), blank=True, null=True)  # e.g [4, 7, 3]
     
     winner = models.ForeignKey('Team', related_name='won_matches', null=True, blank=True, on_delete=models.SET_NULL)
 

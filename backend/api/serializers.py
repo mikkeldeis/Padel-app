@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Team, Match, Tournament
+from .models import User, Team, Match, Tournament, Round
 
 class UserSerializer(serializers.ModelSerializer):
   class Meta:
@@ -47,6 +47,16 @@ class TournamentSerializer(serializers.ModelSerializer):
             {"start_date": "Start date must be before the end date."}
         )
     return data
+
+class RoundSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = Round
+    fields = ["id","tournament","round_number","start_date"]
+    extra_kwargs = {"tournament": {"read_only": True}}
+  def create(self, validated_data):
+    round = Round.objects.create(**validated_data)
+    return round
+
   
 
 # class MatchSerializer(serializers.ModelSerializer):
