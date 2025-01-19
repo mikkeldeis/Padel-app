@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import User, Team, Match, Tournament, Round
+from rest_framework.exceptions import ValidationError
 
 class UserSerializer(serializers.ModelSerializer):
   class Meta:
@@ -31,6 +32,7 @@ class TeamSerializer(serializers.ModelSerializer):
   def create(self, validated_data):
     validated_data['player1'] = self.context['request'].user
     return Team.objects.create(**validated_data)
+  
 class TournamentSerializer(serializers.ModelSerializer):
   class Meta:
     model = Tournament
@@ -69,34 +71,28 @@ class RoundSerializer(serializers.ModelSerializer):
   def create(self, validated_data):
     round = Round.objects.create(**validated_data)
     return round
+class MatchSerializer(serializers.ModelSerializer):
+    team_1 = serializers.PrimaryKeyRelatedField(queryset=Team.objects.all())
+    team_2 = serializers.PrimaryKeyRelatedField(queryset=Team.objects.all())
+    class Meta:
+        model = Match
+        fields = ['id', 'team_1', 'team_2', 'date', 'status', 'score_team_1', 'score_team_2', 'winner', 'round', 'tournament']
+
+    def create(self, validated_data):
+        # Automatically handle foreign key relationships
+        return Match.objects.create(**validated_data)
+    def validate(self, data):
+       tournament = data.get('tournament')
+       round = data.get('round')
+       if tournament and tournament.tournament_type == 'BRACKET' and not round:
+          raise ValidationError({"round": "Round is required for bracket tournaments."})
+       if tournament and tournament.tournament_type == 'AMERICANO' and round:
+          raise ValidationError({"round": "Round is not allowed for americano tournaments."})
+
+       return data
   
-# class MatchSerializer(serializers.ModelSerializer):
-#   class Meta:
-#     model = Match
-#     fields = ["id","round","team_1","team_2","date","status","score_team_1","score_team_2","winner"]
-#     extra_kwargs = {
-#         "winner": {"read_only": True},
-#         "score_team_1": {"required": False},
-#         "score_team_2": {"required": False},
-#     }
-#   def create(self, validated_data):
-#     match = Match.objects.create(**validated_data)
-#     return match
-#   def validate(self, data):
-#     team_1 = data.get('team_1')
-#     team_2 = data.get('team_2')
-#     if team_1 == team_2:
-#         raise serializers.ValidationError(
-#             {"team_2": "Team 2 cannot be the same as Team 1."}
-#         )
-#     return data
-#   def update(self, instance, validated_data):
-    # instance.score_team_1 = validated_data.get('score_team_1', instance.score_team_1)
-    # instance.score_team_2 = validated_data.get('score_team_2', instance.score_team_2)
-    # instance.winner = validated_data.get('winner', instance.winner)
-    # instance.save()
-    # return instance
-  
+
+
 
 
 

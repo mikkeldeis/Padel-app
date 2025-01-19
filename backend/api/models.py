@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
+from django.db.models import JSONField
 
 class Team(models.Model):
   player1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='team_player1')
@@ -38,44 +38,44 @@ class Round(models.Model):
   def __str__(self):
     return f'Round {self.round_number} of {self.tournament.name}'
 
-# class Match(models.Model):
-#     STATUS_CHOICES = [
-#         ('pending', 'Pending'),
-#         ('completed', 'Completed'),
-#     ]
-#     round = models.ForeignKey('Round', related_name='matches', on_delete=models.CASCADE, null=True, blank=True)
-#     team_1 = models.ForeignKey('Team', related_name='team_1_matches', on_delete=models.CASCADE, null=True, blank=True)
-#     team_2 = models.ForeignKey('Team', related_name='team_2_matches', on_delete=models.CASCADE, null=True, blank=True)
-#     date = models.DateTimeField(null=True, blank=True)
-#     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
+class Match(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Completed', 'Completed'),
+    ]
+    round = models.ForeignKey('Round', related_name='matches', on_delete=models.CASCADE, null=True, blank=True)
+    tournament = models.ForeignKey('Tournament', related_name='matches', on_delete=models.CASCADE, null=True, blank=True)
+    team_1 = models.ForeignKey('Team', related_name='team_1_matches', on_delete=models.CASCADE, null=True, blank=True)
+    team_2 = models.ForeignKey('Team', related_name='team_2_matches', on_delete=models.CASCADE, null=True, blank=True)
+    date = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
 
-#     # Store scores as arrays of integers
-#     score_team_1 = ArrayField(models.IntegerField(), blank=True, null=True)  # e.g [6, 5, 6]
-#     score_team_2 = ArrayField(models.IntegerField(), blank=True, null=True)  # e.g [4, 7, 3]
+    # Store scores as arrays of integers
+    score_team_1 = JSONField(blank=True, null=True)  # Store scores as JSON
+    score_team_2 = JSONField(blank=True, null=True)
     
-#     winner = models.ForeignKey('Team', related_name='won_matches', null=True, blank=True, on_delete=models.SET_NULL)
+    winner = models.ForeignKey('Team', related_name='won_matches', null=True, blank=True, on_delete=models.SET_NULL)
 
-#     def __str__(self):
-#         return f"{self.team_1} vs {self.team_2} at {self.date}"
-#     def record_result(self, score_team_1, score_team_2):
-#         """ Record the final result after the match is done. """
-#         self.score_team_1 = score_team_1
-#         self.score_team_2 = score_team_2
-#         self.status = 'completed'
-#         # Determine the winner based on scores
-#         self.winner = self.team_1 if self._get_winner(score_team_1) else self.team_2
-#         self.save()
+    def __str__(self):
+        return f"{self.team_1} vs {self.team_2} at {self.date}"
+    def record_result(self, score_team_1, score_team_2):
+      """ Record the final result after the match is done. """
+      self.score_team_1 = score_team_1
+      self.score_team_2 = score_team_2
+      self.status = 'Completed'
+      # Determine the winner based on scores
+      self.winner = self.determine_winner()
+      self.save()
 
-#     def _get_winner(self, score_team_1):
-#         """ Helper function to calculate the winner based on set scores. """
-#         team_1_sets_won, team_2_sets_won = 0, 0
-#         for set_team_1, set_team_2 in zip(self.score_team_1, self.score_team_2):
-#             if set_team_1 > set_team_2:
-#                 team_1_sets_won += 1
-#             else:
-#                 team_2_sets_won += 1
-#         return team_1_sets_won > team_2_sets_won
-
+    def determine_winner(self):
+      """ Determine the winner based on set scores. """
+      if not self.score_team_1 or not self.score_team_2:
+            return None
+      team_1_sets_won = sum(1 for set_team_1, set_team_2 in zip(self.score_team_1, self.score_team_2) if set_team_1 > set_team_2)
+      team_2_sets_won = len(self.score_team_1) - team_1_sets_won
+      return self.team_1 if team_1_sets_won > team_2_sets_won else self.team_2
+  
+  
 
 
   
