@@ -50,6 +50,8 @@ class TournamentDeleteView(generics.DestroyAPIView):
     def get_queryset(self):
         user = self.request.user
         return Tournament.objects.filter(host=user)
+
+
 class RoundListCreateView(generics.ListCreateAPIView):
     serializer_class = RoundSerializer
     permission_classes = [IsAuthenticated]

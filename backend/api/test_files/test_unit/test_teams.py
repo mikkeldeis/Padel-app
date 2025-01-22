@@ -28,7 +28,8 @@ class TeamTests(TestCase):
     def test_create_double_team(self):
       response = self.client.post(
           '/api/teams/',
-          {'player2': self.user2.id},
+          {'player2': self.user2.id, 'team_size': 2},
+
           format='json'
       )
       self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -37,10 +38,18 @@ class TeamTests(TestCase):
       self.assertEqual(Team.objects.get().player2, self.user2)
       self.assertEqual(Team.objects.get().wins, 0)
       self.assertEqual(Team.objects.get().losses, 0)  # Assert default value
+    def test_create_double_team_no_team_size(self):
+      response = self.client.post(
+          '/api/teams/',
+          {'player2': self.user2.id},
+          format='json'
+      )
+      self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+      self.assertEqual(Team.objects.count(), 0)
     def test_create_double_team_same_player(self):
       response = self.client.post(
           '/api/teams/',
-          {'player2': self.user1.id},
+          {'player2': self.user1.id, 'team_size': 2},
           format='json'
       )
       self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -52,11 +61,11 @@ class TeamTests(TestCase):
       team = Team.objects.create(player1=self.user1)
       response = self.client.get('/api/teams/')
       self.assertEqual(response.status_code, status.HTTP_200_OK)
-      self.assertEqual(response.data, [{'id': team.id, 'player1': self.user1.id, 'player2': None, 'wins': 0, 'losses': 0}])
+      self.assertEqual(response.data, [{'id': team.id, 'player1': self.user1.id, 'player2': None, 'wins': 0, 'losses': 0, 'team_size': 1}])
     def test_get_teams_with_player2(self):
-      team = Team.objects.create(player1=self.user1, player2=self.user2)
+      team = Team.objects.create(player1=self.user1, player2=self.user2, team_size=2)
       response = self.client.get('/api/teams/')
       self.assertEqual(response.status_code, status.HTTP_200_OK)
-      self.assertEqual(response.data, [{'id': team.id, 'player1': self.user1.id, 'player2': self.user2.id, 'wins': 0, 'losses': 0}])
+      self.assertEqual(response.data, [{'id': team.id, 'player1': self.user1.id, 'player2': self.user2.id, 'wins': 0, 'losses': 0, 'team_size': 2}])
 
        

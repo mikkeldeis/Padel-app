@@ -73,6 +73,12 @@ class MatchTests(TestCase):
         self.assertEqual(match.score_team_1, [6,1,5])
         self.assertEqual(match.score_team_2, [5,6,6])
         self.assertEqual(match.winner, self.team2)
+    # def test_update_score_invalid(self):
+    #     match = Match.objects.create(team_1=self.team1, team_2=self.team2)
+    #     response = self.client.patch(f'/api/match/{match.id}/', {'score_team_1': [6,1,5], 'score_team_2': [5,6]}, format='json')
+    #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    #     match.refresh_from_db()
+    #     self.assertEqual(match.status, 'Pending')
 
   
 

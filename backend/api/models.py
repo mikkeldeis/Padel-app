@@ -4,13 +4,18 @@ from django.core.exceptions import ValidationError
 from django.db.models import JSONField
 
 class Team(models.Model):
+  TEAM_SIZE = [
+    (1, 'Single'),
+    (2, 'Double')
+  ]
   player1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='team_player1')
   player2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='team_player2', null=True, blank=True)
   wins = models.IntegerField(default=0)
   losses = models.IntegerField(default=0)
+  team_size = models.IntegerField(choices=TEAM_SIZE, default=1)
   
   def __str__(self):
-    if self.player2 is None:
+    if self.team_size == 1:
       return f'{self.player1.username} with {self.wins} wins and {self.losses} losses'
     else:
       return f'{self.player1.username} and {self.player2.username} with {self.wins} wins and {self.losses} losses'
@@ -21,15 +26,28 @@ class Tournament(models.Model):
     ('AMERICANO', 'Americano'),
     ('LEAGUE', 'League')
   ]
+  TEAM_SIZES = [
+     (1, 'Single'), 
+     (2, 'Double') 
+  ]
   host = models.ForeignKey(User, on_delete=models.CASCADE)
   start_date = models.DateField(null=True, blank=True)
   end_date = models.DateField(null=True, blank=True)
   name = models.CharField(max_length=100)
   winner = models.ForeignKey(Team, null=True, blank=True, on_delete=models.SET_NULL)
   tournament_type = models.CharField(max_length=10, choices=TOURNAMENT_TYPES, default='BRACKET')
+  team_size = models.IntegerField(choices=TEAM_SIZES, default=1)
+  teams = models.ManyToManyField(Team, related_name='tournaments', blank=True)
+  participants = models.ManyToManyField(User, related_name='tournaments', blank=True)
   def __str__(self):
     return f'{self.name} hosted by {self.host.username}'
-  
+class BracketTournament(Tournament):
+   pass
+class LeagueTournament(Tournament):
+   pass
+class AmericanoTournament(Tournament):
+  pass
+
 class Round(models.Model):
   tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE)
   round_number = models.IntegerField()
@@ -42,6 +60,10 @@ class Match(models.Model):
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
         ('Completed', 'Completed'),
+    ]
+    TEAM_SIZE = [
+        (1, 'Single'),
+        (2, 'Double')
     ]
     round = models.ForeignKey('Round', related_name='matches', on_delete=models.CASCADE, null=True, blank=True)
     tournament = models.ForeignKey('Tournament', related_name='matches', on_delete=models.CASCADE, null=True, blank=True)

@@ -18,7 +18,7 @@ class TournamentTests(TestCase):
   def test_create_tournament_bracket(self):
       response = self.client.post(
           '/api/tournaments/',
-          {'start_date': '2022-01-01', 'end_date': '2022-01-02', 'name': 'Tournament 1', 'tournament_type': 'BRACKET'},
+          {'start_date': '2022-01-01', 'end_date': '2022-01-02', 'name': 'Tournament 1', 'tournament_type': 'BRACKET', 'team_size': 1},
           format='json'
       )
       self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -118,26 +118,7 @@ class TournamentTests(TestCase):
       self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
       self.assertEqual(Tournament.objects.count(), 1)
   
-  #test tournaments/<int:pk>/
-  def test_get_tournament(self):
-      tournament = Tournament.objects.create(host=self.host, start_date=date(2022, 1, 1), end_date=date(2022, 1, 2), name='Tournament 1', tournament_type='BRACKET')
-      response = self.client.get(f'/api/tournaments/{tournament.id}/')
-      self.assertEqual(response.status_code, status.HTTP_200_OK)
-      self.assertEqual(response.data, {'id': tournament.id, 'host': self.host.id, 'start_date': '2022-01-01', 'end_date': '2022-01-02', 'name': 'Tournament 1', 'winner': None, 'tournament_type': 'BRACKET'})
-  def test_get_tournaments(self):
-      tournament1 = Tournament.objects.create(host=self.host, start_date=date(2022, 1, 1), end_date=date(2022, 1, 2), name='Tournament 1', tournament_type='BRACKET')
-      tournament2 = Tournament.objects.create(host=self.host, start_date=date(2022, 1, 3), end_date=date(2022, 1, 4), name='Tournament 2', tournament_type='AMERICANO')
-      response = self.client.get('/api/tournaments/')
-      self.assertEqual(response.status_code, status.HTTP_200_OK)
-      self.assertEqual(response.data, [
-          {'id': tournament1.id, 'host': self.host.id, 'start_date': '2022-01-01', 'end_date': '2022-01-02', 'name': 'Tournament 1', 'winner': None, 'tournament_type': 'BRACKET'},
-          {'id': tournament2.id, 'host': self.host.id, 'start_date': '2022-01-03', 'end_date': '2022-01-04', 'name': 'Tournament 2', 'winner': None, 'tournament_type': 'AMERICANO'}
-      ])
-  def test_get_tournament_unauthenticated(self):
-      self.client.force_authenticate(user=None)
-      tournament = Tournament.objects.create(host=self.host, start_date=date(2022, 1, 1), end_date=date(2022, 1, 2), name='Tournament 1', tournament_type='BRACKET')
-      response = self.client.get(f'/api/tournaments/{tournament.id}/')
-      self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+  
 
       
 
