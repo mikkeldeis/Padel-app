@@ -1,6 +1,7 @@
 from django.urls import path, include
 from . import views
 
+# 
 urlpatterns = [
     path('teams/', views.TeamListCreateView.as_view(), name="team-list-create"),
     path('tournaments/', views.TournamentListCreateView.as_view(), name="tournament-list-create"),

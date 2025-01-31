@@ -88,7 +88,7 @@ class Match(models.Model):
       # Determine the winner based on scores
       self.winner = self.determine_winner()
       self.save()
-
+ 
     def determine_winner(self):
       """ Determine the winner based on set scores. """
       if not self.score_team_1 or not self.score_team_2:
@@ -96,6 +96,8 @@ class Match(models.Model):
       team_1_sets_won = sum(1 for set_team_1, set_team_2 in zip(self.score_team_1, self.score_team_2) if set_team_1 > set_team_2)
       team_2_sets_won = len(self.score_team_1) - team_1_sets_won
       return self.team_1 if team_1_sets_won > team_2_sets_won else self.team_2
+    
+
   
   
 

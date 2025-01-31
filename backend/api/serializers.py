@@ -22,14 +22,13 @@ class TeamSerializer(serializers.ModelSerializer):
     }
   def validate(self, data):
     player1 = self.context['request'].user  # player1 is the logged-in user
+    #TODO Check if this is the correct way to get the user (self.context['request'].user). Is it always the logged-in user?
     player2 = data.get('player2')  # player2 is the user to be added to the team
     team_size = data.get('team_size', 1)
-    # Check if player2 is the same as player1
     if player2 == player1:
         raise serializers.ValidationError(
             {"player2": "Player2 cannot be the same as Player1."}
         )
-    # Check if the team already exists
     team = Team.objects.filter(player1=player1, player2=player2) | Team.objects.filter(player1=player2, player2=player1)
     if team.exists():
         raise serializers.ValidationError(
@@ -56,22 +55,20 @@ class TournamentSerializer(serializers.ModelSerializer):
   def create(self, validated_data):
     validated_data['host'] = self.context['request'].user
     return Tournament.objects.create(**validated_data)
-  def validate(self, data):
-    start_date = data.get('start_date')
-    end_date = data.get('end_date')
+  def validate_dates(self, start_date, end_date):
     if start_date and end_date and start_date > end_date:
         raise serializers.ValidationError(
             {"start_date": "Start date must be before the end date."}
         )
+  def validate(self, data):
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
+    self.validate_dates(start_date, end_date)
     return data
   def update(self, instance, validated_data):
     start_date = validated_data.get('start_date', instance.start_date)
     end_date = validated_data.get('end_date', instance.end_date)
-    
-    if start_date > end_date:
-        raise serializers.ValidationError(
-            {"start_date": "Start date must be before the end date."}
-        )
+    self.validate_dates(start_date, end_date)
     instance.start_date = start_date
     instance.end_date = end_date
     instance.name = validated_data.get('name', instance.name)
@@ -79,7 +76,6 @@ class TournamentSerializer(serializers.ModelSerializer):
     instance.save()
     return instance
   
-
 class RoundSerializer(serializers.ModelSerializer):
   class Meta:
     model = Round
@@ -88,6 +84,7 @@ class RoundSerializer(serializers.ModelSerializer):
   def create(self, validated_data):
     round = Round.objects.create(**validated_data)
     return round
+  
 class MatchSerializer(serializers.ModelSerializer):
     team_1 = serializers.PrimaryKeyRelatedField(queryset=Team.objects.all())
     team_2 = serializers.PrimaryKeyRelatedField(queryset=Team.objects.all())
@@ -95,7 +92,6 @@ class MatchSerializer(serializers.ModelSerializer):
         model = Match
         fields = ['id', 'team_1', 'team_2', 'date', 'status', 'score_team_1', 'score_team_2', 'winner', 'round', 'tournament']
     def create(self, validated_data):
-        # Automatically handle foreign key relationships
         return Match.objects.create(**validated_data)
     def validate(self, data):
        tournament = data.get('tournament')

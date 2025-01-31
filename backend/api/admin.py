@@ -5,5 +5,5 @@ from .models import Team, Match
 admin.site.register(Team)
 admin.site.register(Match)
 
-# Register your models here.
+
 

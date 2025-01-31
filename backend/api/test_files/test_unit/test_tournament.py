@@ -105,7 +105,6 @@ class TournamentTests(TestCase):
       response = self.client.put(f'/api/tournaments/update/{tournament.id}/', updated_data, format='json')
       self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
       tournament.refresh_from_db()
-  # test tournaments/delete/<int:pk>/
   def test_delete_tournament(self):
       tournament = Tournament.objects.create(host=self.host, start_date=date(2022, 1, 1), end_date=date(2022, 1, 2), name='Tournament 1', tournament_type='BRACKET')
       response = self.client.delete(f'/api/tournaments/delete/{tournament.id}/')

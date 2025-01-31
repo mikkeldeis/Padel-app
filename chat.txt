@@ -18,7 +18,7 @@ The architecture is divided into three main layers:
   - Game History View
 
 - **Technologies**:
-  - HTML, CSS, JavaScript (or frameworks like React/Vue.js)
+  - ReactJS
   - Responsive Design for mobile and desktop compatibility.
 
 ---
@@ -31,10 +31,9 @@ The architecture is divided into three main layers:
   - Stats and Insights Calculation (Recent Matches, Win Rates, Frequent Collaborators/Adversaries)
 
 - **Technologies**:
-  - **Language**: Go or Python
+  - **Language**: Python
   - **Frameworks**:
-    - Go: Gin/Gorilla Mux
-    - Python: Django/Flask
+    - Python: Django
 
 - **Endpoints**:
   - `/login`: Handles user authentication.
@@ -46,7 +45,6 @@ The architecture is divided into three main layers:
   - `/get-profile`: Fetches user stats and history.
 
 ---
-
 ### 3. Database:
 - **Schema Design**:
   - `users` Table:
